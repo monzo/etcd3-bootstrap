@@ -3,6 +3,7 @@
 *.dll
 *.so
 *.dylib
+etcd3-bootstrap-linux-amd64
 
 # Test binary, build with `go test -c`
 *.test
