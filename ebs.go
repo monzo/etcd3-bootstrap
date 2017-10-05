@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
+	"os/exec"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -70,10 +73,25 @@ func attachVolume(svc *ec2.EC2, instanceID string, volume *ec2.Volume) error {
 	return nil
 }
 
-func volumeInitialized(svc *ec2.EC2, blockDevice string) bool {
-	// Attempt to mount. a mount failure caused by an error
-	// with the device data returns 32. All other error codes
-	// relate to bad usage or internal bugs with `mount`
-	// If we get a 32, return not initialized so we can format.
+func volumeInitialized(blockDevice string) bool {
+	cmd := exec.Command("blkid", blockDevice)
+	cmdReader, err := cmd.StdoutPipe()
+	if err != nil {
+		panic(err)
+	}
+
+	scanner := bufio.NewScanner(cmdReader)
+	go func() {
+		if err := cmd.Run(); err != nil {
+			panic(err)
+		}
+	}()
+
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "ext4") {
+			return true
+		}
+	}
+
 	return false
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
@@ -19,7 +20,7 @@ var (
 func init() {
 	flag.StringVar(&awsRegion, "aws-region", "eu-west-1", "AWS region this instance is on")
 	flag.StringVar(&ebsVolumeName, "ebs-volume-name", "", "EBS volume to attach to this node")
-	flag.StringVar(&mountPoint, "mount-point", "/var/lib/etcd", "EBS volume mount point")
+	flag.StringVar(&mountPoint, "mount-point", "/var/lib/etcd-bootstrap", "EBS volume mount point")
 	flag.StringVar(&blockDevice, "block-device", "/dev/xvdf", "Block device to attach as")
 	flag.Parse()
 }
@@ -51,6 +52,10 @@ func main() {
 	err = attachVolume(ec2SVC, instanceID, volume)
 	if err != nil {
 		panic(err)
+	}
+
+	if ok := volumeInitialized(blockDevice); !ok {
+		log.Println("NEED TO FORMAT")
 	}
 
 }
