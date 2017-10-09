@@ -103,7 +103,7 @@ func attachVolume(svc *ec2.EC2, instanceID string, volume *ec2.Volume) error {
 func ensureVolumeInited(blockDevice string) error {
 	log.Printf("Checking for existing ext4 filesystem on device: %s\n", blockDevice)
 
-	out, err := exec.Command("blkid", blockDevice).Output()
+	out, err := exec.Command("/usr/sbin/blkid", blockDevice).Output()
 	if err != nil {
 		return errors.Wrap(err, "blkid stdout pipe failed")
 	}
