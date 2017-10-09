@@ -117,7 +117,7 @@ func ensureVolumeInited(blockDevice string) error {
 	log.Println("Filesystem not present")
 
 	// format volume here
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("sudo mkfs.ext4 %s -F", blockDevice))
+	cmd := exec.Command("sudo", "/usr/sbin/mkfs.ext4", blockDevice, "-F")
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return errors.Wrap(err, "mkfs.ext4 failed")

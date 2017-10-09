@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
@@ -57,4 +58,9 @@ func main() {
 		panic(err)
 	}
 
+	if err := mountVolume(blockDevice, mountPoint); err != nil {
+		panic(err)
+	}
+
+	log.Printf("Device %s successfully mounted at %s\n", blockDevice, mountPoint)
 }
