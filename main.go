@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
@@ -54,8 +53,8 @@ func main() {
 		panic(err)
 	}
 
-	if ok := volumeInitialized(blockDevice); !ok {
-		log.Println("NEED TO FORMAT")
+	if err := ensureVolumeInited(blockDevice); err != nil {
+		panic(err)
 	}
 
 }

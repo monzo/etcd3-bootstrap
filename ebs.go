@@ -1,15 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/pkg/errors"
 )
 
 func volumeFromName(svc *ec2.EC2, volumeName, az string) (*ec2.Volume, error) {
@@ -67,31 +69,59 @@ func attachVolume(svc *ec2.EC2, instanceID string, volume *ec2.Volume) error {
 		return err
 	}
 
+	for {
+		volumeDescs, err := svc.DescribeVolumes(&ec2.DescribeVolumesInput{
+			VolumeIds: []*string{volume.VolumeId},
+		})
+		if err != nil {
+			return errors.Wrap(err, "Error retrieving volume description status")
+		}
+
+		volumes := volumeDescs.Volumes
+		if len(volumes) == 0 {
+			continue
+		}
+
+		if len(volumes[0].Attachments) == 0 {
+			continue
+		}
+
+		if *volumes[0].Attachments[0].State == ec2.VolumeAttachmentStateAttached {
+			break
+		}
+
+		log.Printf("Waiting for attachment to complete. Current state: %s", *volumes[0].Attachments[0].State)
+		time.Sleep(1 * time.Second)
+	}
+
 	log.Printf("Attached volume %s to instance %s as device %s\n",
 		*volume.VolumeId, instanceID, blockDevice)
 
 	return nil
 }
 
-func volumeInitialized(blockDevice string) bool {
-	cmd := exec.Command("blkid", blockDevice)
-	cmdReader, err := cmd.StdoutPipe()
+func ensureVolumeInited(blockDevice string) error {
+	log.Printf("Checking for existing ext4 filesystem on device: %s\n", blockDevice)
+
+	out, err := exec.Command("blkid", blockDevice).Output()
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "blkid stdout pipe failed")
 	}
 
-	scanner := bufio.NewScanner(cmdReader)
-	go func() {
-		if err := cmd.Run(); err != nil {
-			panic(err)
-		}
-	}()
-
-	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "ext4") {
-			return true
-		}
+	log.Println(string(out))
+	if strings.Contains(string(out), "ext4") {
+		log.Println("Found existing ext4 filesystem")
+		return nil
 	}
 
-	return false
+	log.Println("Filesystem not present")
+
+	// format volume here
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("sudo mkfs.ext4 %s -F", blockDevice))
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	if err := cmd.Run(); err != nil {
+		return errors.Wrap(err, "mkfs.ext4 failed")
+	}
+
+	return nil
 }
