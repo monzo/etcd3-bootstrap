@@ -125,3 +125,24 @@ func ensureVolumeInited(blockDevice string) error {
 
 	return nil
 }
+
+func mountVolume(blockDevice, mountPoint string) error {
+	log.Printf("Mounting device %s at %s\n", blockDevice, mountPoint)
+
+	// ensure mount point exists
+	cmd := exec.Command("sudo", "mkdir", "-p", mountPoint)
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	if err := cmd.Run(); err != nil {
+		return errors.Wrap(err, "mountpoint creation failed")
+	}
+
+	cmd = exec.Command("sudo", "mount", blockDevice, mountPoint)
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	if err := cmd.Run(); err != nil {
+		return errors.Wrap(err, "mount failed")
+	}
+
+	log.Printf("Device %s successfully mounted at %s\n", blockDevice, mountPoint)
+
+	return nil
+}
