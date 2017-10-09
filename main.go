@@ -57,7 +57,11 @@ func main() {
 		panic(err)
 	}
 
-	if err := mountVolume(blockDevice, mountPoint); err != nil {
+	if err := ensureVolumeMounted(blockDevice, mountPoint); err != nil {
+		panic(err)
+	}
+
+	if err := ensureVolumeWriteable(mountPoint); err != nil {
 		panic(err)
 	}
 }

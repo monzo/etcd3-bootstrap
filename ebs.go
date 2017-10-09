@@ -103,14 +103,8 @@ func attachVolume(svc *ec2.EC2, instanceID string, volume *ec2.Volume) error {
 func ensureVolumeInited(blockDevice string) error {
 	log.Printf("Checking for existing ext4 filesystem on device: %s\n", blockDevice)
 
-	out, err := exec.Command("/usr/sbin/blkid", blockDevice).Output()
-	if err != nil {
-		return errors.Wrap(err, "blkid stdout pipe failed")
-	}
-
-	log.Println(string(out))
-	if strings.Contains(string(out), "ext4") {
-		log.Println("Found existing ext4 filesystem")
+	if err := exec.Command("sudo", "/usr/sbin/blkid", blockDevice).Run(); err == nil {
+		log.Println("Found existing filesystem")
 		return nil
 	}
 
@@ -126,7 +120,7 @@ func ensureVolumeInited(blockDevice string) error {
 	return nil
 }
 
-func mountVolume(blockDevice, mountPoint string) error {
+func ensureVolumeMounted(blockDevice, mountPoint string) error {
 	log.Printf("Mounting device %s at %s\n", blockDevice, mountPoint)
 
 	// ensure mount point exists
@@ -138,11 +132,31 @@ func mountVolume(blockDevice, mountPoint string) error {
 
 	cmd = exec.Command("sudo", "mount", blockDevice, mountPoint)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "mount failed")
+	if err := cmd.Run(); err == nil {
+		log.Printf("Device %s successfully mounted at %s\n", blockDevice, mountPoint)
+		return nil
 	}
 
-	log.Printf("Device %s successfully mounted at %s\n", blockDevice, mountPoint)
+	// mount failed, double-check as this may result from a previous mount
+	log.Println("Mount failed. perhaps already mounted, will double check")
+	out, err := exec.Command("mount").Output()
+	if err != nil {
+		return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue.")
+	}
+
+	if strings.Contains(string(out), fmt.Sprintf("%s on %s", blockDevice, mountPoint)) {
+		log.Printf("Device %s successfully mounted at %s\n", blockDevice, mountPoint)
+		return nil
+	}
+
+	return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue.")
+}
+
+func ensureVolumeWriteable(mountPoint string) error {
+	log.Printf("Ensuring %s is r/w by etcd\n", mountPoint)
+	if err := exec.Command("sudo", "/usr/bin/chown", "-R", "etcd:etcd", mountPoint).Run(); err != nil {
+		return errors.Wrapf(err, "cannot make %s writeable by etcd", mountPoint)
+	}
 
 	return nil
 }
