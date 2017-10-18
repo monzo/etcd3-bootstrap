@@ -141,7 +141,7 @@ func ensureVolumeMounted(blockDevice, mountPoint string) error {
 	log.Println("Mount failed. perhaps already mounted, will double check")
 	out, err := exec.Command("mount").Output()
 	if err != nil {
-		return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue.")
+		return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue")
 	}
 
 	if strings.Contains(string(out), fmt.Sprintf("%s on %s", blockDevice, mountPoint)) {
@@ -149,7 +149,7 @@ func ensureVolumeMounted(blockDevice, mountPoint string) error {
 		return nil
 	}
 
-	return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue.")
+	return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue")
 }
 
 func ensureVolumeWriteable(mountPoint string) error {
