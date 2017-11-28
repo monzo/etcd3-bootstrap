@@ -19,6 +19,12 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/jpillora/backoff"
+  packages = ["."]
+  revision = "8eab2debe79d12b7bd3d10653910df25fa9552ba"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -27,6 +33,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1711d7148f3165051fcad5550663b38e807e77b34ae5d0c8a474694ca918d47f"
+  inputs-digest = "83274414860248fbba9279432921981c7a0e02ff96f3a750a864d441e778f0fe"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/jpillora/backoff"
 	"github.com/pkg/errors"
 )
 
@@ -69,6 +70,13 @@ func attachVolume(svc *ec2.EC2, instanceID string, volume *ec2.Volume) error {
 		return err
 	}
 
+	b := &backoff.Backoff{
+		Min:    100 * time.Millisecond,
+		Max:    100 * time.Second,
+		Factor: 2,
+		Jitter: false,
+	}
+
 	for {
 		volumeDescs, err := svc.DescribeVolumes(&ec2.DescribeVolumesInput{
 			VolumeIds: []*string{volume.VolumeId},
@@ -91,7 +99,7 @@ func attachVolume(svc *ec2.EC2, instanceID string, volume *ec2.Volume) error {
 		}
 
 		log.Printf("Waiting for attachment to complete. Current state: %s", *volumes[0].Attachments[0].State)
-		time.Sleep(1 * time.Second)
+		b.Duration()
 	}
 
 	log.Printf("Attached volume %s to instance %s as device %s\n",
