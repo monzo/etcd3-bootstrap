@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	useEBS        bool
 	ebsVolumeName string
 	mountPoint    string
 	blockDevice   string
@@ -21,6 +22,7 @@ func init() {
 	flag.StringVar(&ebsVolumeName, "ebs-volume-name", "", "EBS volume to attach to this node")
 	flag.StringVar(&mountPoint, "mount-point", "/var/lib/etcd", "EBS volume mount point")
 	flag.StringVar(&blockDevice, "block-device", "/dev/xvdf", "Block device to attach as")
+	flag.BoolVar(&useEBS, "use-ebs", true, "Use EBS instead of instance store")
 	flag.Parse()
 }
 
@@ -38,19 +40,21 @@ func main() {
 		panic(err)
 	}
 
-	volume, err := volumeFromName(ec2SVC, ebsVolumeName, availabilityZone)
-	if err != nil {
-		panic(err)
-	}
+	if useEBS {
+		volume, err := volumeFromName(ec2SVC, ebsVolumeName, availabilityZone)
+		if err != nil {
+			panic(err)
+		}
 
-	instanceID, err := metadataSVC.GetMetadata("instance-id")
-	if err != nil {
-		panic(err)
-	}
+		instanceID, err := metadataSVC.GetMetadata("instance-id")
+		if err != nil {
+			panic(err)
+		}
 
-	err = attachVolume(ec2SVC, instanceID, volume)
-	if err != nil {
-		panic(err)
+		err = attachVolume(ec2SVC, instanceID, volume)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	if err := ensureVolumeInited(blockDevice); err != nil {
