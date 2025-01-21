@@ -157,7 +157,7 @@ func ensureVolumeMounted(blockDevice, mountPoint string) error {
 		return nil
 	}
 
-	return errors.Wrap(err, "cannot mount or verify mount. cowardly refusing to continue")
+	return errors.New("cannot mount or verify mount. cowardly refusing to continue")
 }
 
 func ensureVolumeWriteable(mountPoint string) error {
