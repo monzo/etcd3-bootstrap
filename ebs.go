@@ -119,7 +119,7 @@ func ensureVolumeInited(blockDevice, fileSystemFormatType, fileSystemFormatArgum
 	log.Println("Filesystem not present")
 
 	// format volume here
-	mkfsCmd := []string{"/usr/sbin/mkfs." + fileSystemFormatType, blockDevice}
+	mkfsCmd := []string{"/usr/sbin/mkfs", "-t", fileSystemFormatType, blockDevice}
 	if fileSystemFormatArguments != "" {
 		mkfsCmd = append(mkfsCmd, fileSystemFormatArguments)
 	}
