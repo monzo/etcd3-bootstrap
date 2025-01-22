@@ -1,7 +1,7 @@
 
 SHELL := /bin/bash
 S3_BUCKET := "monzo-deployment-artifacts"
-VERSION := "v1.0.1"
+VERSION := "v1.0.2"
 
 .DEFAULT_GOAL: etcd3-bootstrap-linux-amd64-$(VERSION)
 
