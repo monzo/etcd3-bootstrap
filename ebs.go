@@ -119,7 +119,12 @@ func ensureVolumeInited(blockDevice, fileSystemFormatType, fileSystemFormatArgum
 	log.Println("Filesystem not present")
 
 	// format volume here
-	cmd := exec.Command("sudo", "/usr/sbin/mkfs."+fileSystemFormatType, blockDevice, fileSystemFormatArguments)
+	mkfsCmd := []string{"/usr/sbin/mkfs", "-t", fileSystemFormatType, blockDevice}
+	if fileSystemFormatArguments != "" {
+		mkfsCmd = append(mkfsCmd, fileSystemFormatArguments)
+	}
+
+	cmd := exec.Command("sudo", mkfsCmd...)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return errors.Wrap(err, "mkfs."+fileSystemFormatType+" failed")
